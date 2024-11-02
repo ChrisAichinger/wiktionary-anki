@@ -1,0 +1,7 @@
+.ipynb_checkpoints/
+*.ipynb
+__pycache__/
+*.anki2
+*.media.db2
+*.media/
+/.env

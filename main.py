@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 import re
 
 from fastapi import FastAPI, BackgroundTasks
@@ -18,8 +19,15 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env")
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    ankitool.sync(settings.collection_file, settings.sync_user, settings.sync_pass)
+    yield
+
+
+
 settings = Settings()
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

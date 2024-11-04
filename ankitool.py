@@ -69,7 +69,8 @@ def import_note(filename: str, deck: str, note: Note):
 # Collection Sync
 #################
 
-SYNC_STATUS_MAP = {v: k for k, v in sync_pb2.SyncStatusResponse.Required.items()}
+SYNC_STATUS_MAP = {v: k for k, v in sync_pb2.SyncCollectionResponse.ChangesRequired.items()}
+
 
 def sync(filename, sync_user, sync_pass):
     anki.lang.set_lang('en')
@@ -86,21 +87,20 @@ def sync_collection(col: Collection, sync_user: str, sync_pass: str):
     if required == 'NO_CHANGES':
         return
     sync_result = run_in_thread(col.sync_collection, auth, sync_media=False)
-    if sync_result.required == 'FULL_DOWNLOAD':
+    print("syncer", sync_result)
+    if SYNC_STATUS_MAP[sync_result.required] in ['FULL_SYNC', 'FULL_DOWNLOAD']:
         # `auth2` solves the "missing original size" error.
         # See https://github.com/ankidroid/Anki-Android/issues/14219
         auth2 = auth
         if sync_result.new_endpoint:
-            print(sync_result.new_endpoint)
             auth2 = sync_pb2.SyncAuth(hkey=auth.hkey, endpoint=sync_result.new_endpoint)
-            result = run_in_thread(col.full_upload_or_download,
-                                   auth=auth2,
-                                   server_usn=sync_result.server_media_usn,
-                                   upload=False)
+        run_in_thread(col.full_upload_or_download,
+                                auth=auth2,
+                                server_usn=sync_result.server_media_usn,
+                                upload=False)
     required2 = SYNC_STATUS_MAP[col.sync_status(auth).required]
     if required2 != 'NO_CHANGES':
         raise RuntimeError(f"Sync failed: {required2}")
-
 
 
 def run_in_thread(fn, *args, **kwargs):

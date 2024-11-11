@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     deck: str
     sync_user: str
     sync_pass: str
+    sub_path: str = '/'
 
     model_config = SettingsConfigDict(env_file=".env")
 
@@ -27,8 +28,15 @@ async def lifespan(app: FastAPI):
 
 
 settings = Settings()
-app = FastAPI(lifespan=lifespan)
-app.add_middleware(
+subapp = FastAPI(lifespan=lifespan)
+
+if settings.sub_path == '/':
+    app = subapp
+else:
+    app = FastAPI()
+    app.mount(settings.sub_path, subapp)
+
+subapp.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
@@ -36,23 +44,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/assets", StaticFiles(directory="frontend/dist/assets"), name="assets")
+subapp.mount("/assets", StaticFiles(directory="frontend/dist/assets"), name="assets")
 
-@app.get("/", response_class=FileResponse)
+@subapp.get("/", response_class=FileResponse)
 async def main():
     return "frontend/dist/index.html"
 
-@app.get("/word/{word}")
+@subapp.get("/word/{word}")
 def load_word(word: str):
     return wiktionary.load_wiktionary(word)
 
-@app.post("/add_note")
+@subapp.post("/add_note")
 def add_note(note: ankitool.Note, background_tasks: BackgroundTasks):
     ankitool.import_note(settings.collection_file, settings.deck, note)
     background_tasks.add_task(ankitool.sync, settings.collection_file, settings.sync_user, settings.sync_pass)
     return {"status": "success", "message": "Note added"}
 
-@app.get("/search/{word}")
+@subapp.get("/search/{word}")
 async def search_word(word: str):
     sanitized_word = re.sub(r'[^\w ]', '', word, flags=re.UNICODE)
     url = f"https://en.wiktionary.org/w/api.php?action=opensearch&format=json&formatversion=2&search={sanitized_word}&namespace=0&limit=10"

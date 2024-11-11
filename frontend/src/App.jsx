@@ -31,8 +31,21 @@ const theme = createTheme({
   },
 });
 
+function wordFromLocation() {
+  const locationParams = new URLSearchParams(window.location.search);
+  let w = locationParams.get('w');
+  if (!/^https?:/.test(w)) {
+    return w;
+  }
+  const l = new URL(w).pathname.split('/');
+  if (l && l.length) {
+    return decodeURIComponent(l[l.length - 1]);
+  }
+  return "";
+}
+
 function App() {
-  const defaultWord = "sül";
+  const defaultWord = wordFromLocation();
   const [word, setWord] = createSignal(defaultWord);
   const [translation, { mutate }] = createResource(word, fetchWord);
   const [submitState, setSubmitState] = createSignal(new Map());

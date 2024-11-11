@@ -11,15 +11,16 @@ import {
 import Autocomplete from './Autocomplete';
 import loadWiktionary from './wiktionary';
 
+const ROOT = location.pathname.split('/').slice(0, -1).join('/');
 
 const fetchWord = async (word) => {
-  const response = await fetch(`http://127.0.0.1:8000/word/${word}`);
+  const response = await fetch(`${ROOT}/word/${word}`);
   const pyResponse = response.json();
   return loadWiktionary(word);
 }
 
 const fetchAutocomplete = async (word) => {
-  const response = await fetch(`http://127.0.0.1:8000/search/${word}`);
+  const response = await fetch(`${ROOT}/search/${word}`);
   // See https://www.mediawiki.org/wiki/API:Opensearch for the response format.
   const data = await response.json()
   return data[1];
@@ -69,7 +70,7 @@ function App() {
     const note = { note_type, fields };
     console.log("Submitting note", note);
     addSent(wordtype, word);
-    fetch('http://127.0.0.1:8000/add_note', {
+    fetch(`${ROOT}/add_note`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(note),

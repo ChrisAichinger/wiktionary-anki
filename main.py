@@ -50,10 +50,6 @@ subapp.mount("/assets", StaticFiles(directory="frontend/dist/assets"), name="ass
 async def main():
     return "frontend/dist/index.html"
 
-@subapp.get("/word/{word}")
-def load_word(word: str):
-    return wiktionary.load_wiktionary(word)
-
 @subapp.post("/add_note")
 def add_note(note: ankitool.Note, background_tasks: BackgroundTasks):
     ankitool.import_note(settings.collection_file, settings.deck, note)

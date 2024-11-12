@@ -13,12 +13,6 @@ import loadWiktionary from './wiktionary';
 
 const ROOT = location.pathname.split('/').slice(0, -1).join('/');
 
-const fetchWord = async (word) => {
-  const response = await fetch(`${ROOT}/word/${word}`);
-  const pyResponse = response.json();
-  return loadWiktionary(word);
-}
-
 const fetchAutocomplete = async (word) => {
   const response = await fetch(`${ROOT}/search/${word}`);
   // See https://www.mediawiki.org/wiki/API:Opensearch for the response format.
@@ -48,7 +42,7 @@ function wordFromLocation() {
 function App() {
   const defaultWord = wordFromLocation();
   const [word, setWord] = createSignal(defaultWord);
-  const [translation, { mutate }] = createResource(word, fetchWord);
+  const [translation, { mutate }] = createResource(word, loadWiktionary);
   const [submitState, setSubmitState] = createSignal(new Map());
   const [sent, setSent] = createSignal([]);
   const [added, setAdded] = createSignal([]);

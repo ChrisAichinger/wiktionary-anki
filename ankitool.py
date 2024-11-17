@@ -3,6 +3,7 @@
 
 import concurrent.futures
 from contextlib import closing
+import logging
 
 import anki
 import anki.lang
@@ -12,6 +13,10 @@ import anki.importing.csvfile
 from anki import sync_pb2
 
 from pydantic import BaseModel
+
+
+# Use the uvicorn error logger so our messages show up on the production log.
+LOG = logging.getLogger('uvicorn.error')
 
 
 #################
@@ -72,11 +77,14 @@ def import_note(filename: str, deck: str, note: Note):
 SYNC_STATUS_MAP = {v: k for k, v in sync_pb2.SyncCollectionResponse.ChangesRequired.items()}
 
 
+
 def sync(filename, sync_user, sync_pass):
+    LOG.info("Syncing")
     anki.lang.set_lang('en')
     col = Collection(filename)
     with closing(col):
         return sync_collection(col, sync_user, sync_pass)
+    LOG.info("Sync successful")
 
 
 def sync_collection(col: Collection, sync_user: str, sync_pass: str):
@@ -87,7 +95,7 @@ def sync_collection(col: Collection, sync_user: str, sync_pass: str):
     if required == 'NO_CHANGES':
         return
     sync_result = run_in_thread(col.sync_collection, auth, sync_media=False)
-    print("syncer", sync_result)
+    LOG.info("Sync Result: %s", '; '.join(repr(sync_result).strip().split('\n')))
     if SYNC_STATUS_MAP[sync_result.required] in ['FULL_SYNC', 'FULL_DOWNLOAD']:
         # `auth2` solves the "missing original size" error.
         # See https://github.com/ankidroid/Anki-Android/issues/14219

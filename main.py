@@ -26,15 +26,10 @@ async def lifespan(app: FastAPI):
     yield
 
 
-
 settings = Settings()
-subapp = FastAPI(lifespan=lifespan)
-
-if settings.sub_path == '/':
-    app = subapp
-else:
-    app = FastAPI()
-    app.mount(settings.sub_path, subapp)
+subapp = FastAPI()
+app = FastAPI(lifespan=lifespan)
+app.mount(settings.sub_path, subapp)
 
 subapp.add_middleware(
     CORSMiddleware,

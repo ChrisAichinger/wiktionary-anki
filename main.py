@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 import httpx
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-import ankitool, wiktionary
+import ankitool
 
 class Settings(BaseSettings):
     collection_file: str = "collection.anki2"
